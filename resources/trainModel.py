@@ -7,7 +7,6 @@ from flask_restful import Resource, reqparse
 import base64
 import io
 
-encodings = []
 
 
 class trainModel(Resource):
@@ -15,9 +14,16 @@ class trainModel(Resource):
     # parser.add_argument('image', required=True, help='This field cannot be left blank')
 
     def post(self):
-        # train_1 = request.files['file']
+        files = request.files
+        encodings = []
 
-        for train_1 in request.files.getlist('file'):
+        # print(train_1)
+
+        # for train_1 in request.files.getlist('file'):
+        #     print(train_1, train_1.name)
+
+        for key, train_1 in files.items():
+            # print(key, train_1)
 
             in_memory_file = io.BytesIO()
             train_1.save(in_memory_file)
@@ -31,8 +37,8 @@ class trainModel(Resource):
 
             encodings.append(encodeTrain_1)
 
-        if len(encodings) == 2:
-            match = face_recognition.compare_faces([encodings[0]], encodings[1])
-            print(match)
+
+        match = face_recognition.compare_faces([encodings[0]], encodings[1])
+        print(match)
 
         return 'received'
