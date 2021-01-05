@@ -11,7 +11,7 @@ CORS(app)
 api = Api(app)
 
 
-path = 'basicImages'
+path = 'resources/basicImages'
 trainImagesEncodings = []
 trainImagesNames = []
 imagesNamesList = os.listdir(path)
