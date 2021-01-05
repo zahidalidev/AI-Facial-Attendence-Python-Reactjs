@@ -2,50 +2,65 @@ import cv2
 import numpy as np
 import face_recognition
 import os
+from flask import Flask, request, jsonify
+from flask_restful import Api
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)
+api = Api(app)
+
 
 path = 'basicImages'
 trainImagesEncodings = []
 trainImagesNames = []
 imagesNamesList = os.listdir(path)
+trainImages = []
+import io
 
-for image in imagesNamesList:
-    trainImagesNames.append(image)
-    img = face_recognition.load_image_file(f'{path}/{image}')
+@app.route('/trainModel', methods=['POST'])
+def post_images_data():
+    # global trainImages
+    photo = request.files['file']
+    print(photo)
+    in_memory_file = io.BytesIO()
+    photo.save(in_memory_file)
+    data = np.fromstring(in_memory_file.getvalue(), dtype=np.uint8)
+    color_image_flag = 1
+    img = cv2.imdecode(data, color_image_flag)
+
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-    # faceLocations = face_recognition.face_locations(img)
-    # for faceLocation in faceLocations:
-    #     cv2.rectangle(img, (faceLocation[3], faceLocation[0]), (faceLocation[1], faceLocation[2]), (0, 255, 0), 2)
-    #     cv2.imshow(image, img)
-
     encodings = face_recognition.face_encodings(img)
-    for encoding in encodings:
-        trainImagesEncodings.append(encoding)
+    print(encodings)
+    return 'received'
 
 
-# for train in trainImagesEncodings:
-#     print(len(train))
-# cv2.waitKey(0)
-# for image in trainImagesNames:
-#     print(image)
+# for image in imagesNamesList:
+#     trainImagesNames.append(image)
+#     img = face_recognition.load_image_file(f'{path}/{image}')
+#     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 #
-# train_1 = face_recognition.load_image_file('basicImages/train_1.jpg')
-# train_1 = cv2.cvtColor(train_1, cv2.COLOR_BGR2RGB)
+#     # faceLocations = face_recognition.face_locations(img)
+#     # for faceLocation in faceLocations:
+#     #     cv2.rectangle(img, (faceLocation[3], faceLocation[0]), (faceLocation[1], faceLocation[2]), (0, 255, 0), 2)
+#     #     cv2.imshow(image, img)
 #
-# test_1 = face_recognition.load_image_file('basicImages/test_1.jpg')
-# test_1 = cv2.cvtColor(test_1, cv2.COLOR_BGR2RGB)
+#     encodings = face_recognition.face_encodings(img)
+#     for encoding in encodings:
+#         trainImagesEncodings.append(encoding)
 #
-# faceLocationTrain_1 = face_recognition.face_locations(train_1)[0]
-# encodeTrain_1 = face_recognition.face_encodings(train_1)[0]
-# cv2.rectangle(train_1, (faceLocationTrain_1[3], faceLocationTrain_1[0]), (faceLocationTrain_1[1], faceLocationTrain_1[2]), (0, 255, 0), 2)
-#
-# faceLocationTest = face_recognition.face_locations(test_1)[0]
-# encodeTest = face_recognition.face_encodings(test_1)[0]
-# cv2.rectangle(test_1, (faceLocationTest[3], faceLocationTest[0]), (faceLocationTest[1], faceLocationTest[2]), (0, 255, 0), 2)
-#
-# match = face_recognition.compare_faces([encodeTrain_1], encodeTest)
-# faceDis = face_recognition.face_distance([encodeTrain_1], encodeTest)
-#
-# cv2.imshow('train_1', train_1)
-# cv2.imshow('test_1', test_1)
-# cv2.waitKey(0)
+
+
+@app.errorhandler(404)
+def not_found(error=None):
+    message = {
+        'status': 404,
+        'message': 'Not found!' + request.url
+    }
+    resp = jsonify(message)
+    resp.status_code = 404
+    return resp
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
