@@ -8,37 +8,27 @@ import base64
 import io
 
 
-
-class trainModel(Resource):
-    parser = reqparse.RequestParser()  # only allow price changes, no name changes allowed
-    # parser.add_argument('image', required=True, help='This field cannot be left blank')
-
-    def post(self):
+class TrainModel(Resource):
+    @staticmethod
+    def post():
         files = request.files
-        encodings = []
+        all_encodings = []
 
-        # print(train_1)
-
-        # for train_1 in request.files.getlist('file'):
-        #     print(train_1, train_1.name)
-
-        for key, train_1 in files.items():
-            # print(key, train_1)
-
+        for name, image in files.items():
             in_memory_file = io.BytesIO()
-            train_1.save(in_memory_file)
-            train_1 = np.fromstring(in_memory_file.getvalue(), dtype=np.uint8)
+            image.save(in_memory_file)
+            image = np.fromstring(in_memory_file.getvalue(), dtype=np.uint8)
             color_image_flag = 1
-            train_1 = cv2.imdecode(train_1, color_image_flag)
+            image = cv2.imdecode(image, color_image_flag)
 
-            # train_1 = face_recognition.load_image_file(train_1)
-            train_1 = cv2.cvtColor(train_1, cv2.COLOR_BGR2RGB)
-            encodeTrain_1 = face_recognition.face_encodings(train_1)[0]
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-            encodings.append(encodeTrain_1)
+            encodings = face_recognition.face_encodings(image)
+            for encoding in encodings:
+                all_encodings.append(encoding)
 
+        encodings_detected = len(all_encodings)
+        res = str(encodings_detected) + ' faces detected'
+        print(res)
 
-        match = face_recognition.compare_faces([encodings[0]], encodings[1])
-        print(match)
-
-        return 'received'
+        return res
