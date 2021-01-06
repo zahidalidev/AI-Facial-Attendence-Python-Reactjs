@@ -6,6 +6,9 @@ from flask import Flask, request, jsonify
 from flask_restful import Resource, reqparse
 import base64
 import io
+from config.configDb import mydb
+import json
+import pickle
 
 
 class TrainModel(Resource):
@@ -28,7 +31,18 @@ class TrainModel(Resource):
                 all_encodings.append(encoding)
 
         encodings_detected = len(all_encodings)
-        res = str(encodings_detected) + ' faces detected'
+        res = str(encodings_detected) + 'faces detected'
         print(res)
 
+        # inserting collections in db
+        fa_nco = mydb["faceEncodings"]
+        pickle_model = pickle.dumps(all_encodings)
+        encodings_collections = {"encodings": pickle_model, "user_id": "zahid5"}
+        fa_nco.insert_one(encodings_collections)
+
+        # getting model from db
+        data = fa_nco.find_one({'user_id': 'zahid'})
+        pickled_model = data['encodings']
+        trained_model = pickle.loads(pickled_model)
+        print(len(trained_model))
         return res
