@@ -7,6 +7,7 @@ from resources.trainModel import TrainModel
 from resources.user import User, Users
 from resources.teacher import Teacher, Teachers
 from resources.course import Course, Courses
+from resources.attendance import Attendance, CoursesAttendance
 
 app = Flask(__name__)
 CORS(app)
@@ -22,5 +23,11 @@ api.add_resource(Teachers, '/teachers', '/teachers/<id>')
 
 api.add_resource(Course, '/course', '/course/<id>')
 api.add_resource(Courses, '/courses', '/courses/<teacher_id>')
+
+api.add_resource(Attendance, '/attendance', '/attendance/<date>/<course_id>')
+api.add_resource(CoursesAttendance, '/courseAttendance', '/courseAttendance/<course_id>')
+
+
 if __name__ == '__main__':
     app.run(debug=True)  # important to mention debug=True
+
