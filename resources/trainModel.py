@@ -34,7 +34,7 @@ class TrainModel(Resource):
         res = str(encodings_detected) + 'faces detected'
         print(res)
 
-        # inserting collections in db
+        # inserting model in db
         fa_nco = mydb["faceEncodings"]
         pickle_model = pickle.dumps(all_encodings)
         encodings_collections = {"encodings": pickle_model, "user_id": "zahid5"}
