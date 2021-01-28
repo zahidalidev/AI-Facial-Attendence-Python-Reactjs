@@ -11,11 +11,11 @@ app = Flask(__name__)
 CORS(app)
 api = Api(app)
 
-api.add_resource(TrainModel, '/trainModel', '/trainModel/<string:id>')
-api.add_resource(User, '/user', '/user/<string:email>/<string:password>')
-api.add_resource(Users, '/users', '/users/<string:id>')
-api.add_resource(Teacher, '/teacher', '/teacher/<string:email>/<string:password>')
-api.add_resource(Teachers, '/teachers', '/teachers/<string:id>')
+api.add_resource(TrainModel, '/trainModel', '/trainModel/<id>')
+api.add_resource(User, '/user', '/user/<email>', '/user/<email>/<password>')
+api.add_resource(Users, '/users', '/users/<id>')
+api.add_resource(Teacher, '/teacher', '/teacher/<email>/<password>')
+api.add_resource(Teachers, '/teachers', '/teachers/<id>')
 
 if __name__ == '__main__':
     app.run(debug=True)  # important to mention debug=True
