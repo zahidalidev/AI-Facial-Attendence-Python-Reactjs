@@ -57,16 +57,15 @@ class User(Resource):
             return 'Email or Password is invalid'
 
     @staticmethod
-    def delete(email):
-
+    def delete(id):
         try:
-            # find user by email.
-            user = userCol.find_one({"email": email})
+            # find user by id.
+            user = userCol.find_one({"_id": ObjectId(id)})
 
             if user is None:
-                return 'Email is invalid'
+                return 'User id is invalid'
 
-            user = userCol.delete_one({"email": email})
+            user = userCol.delete_one({"_id": ObjectId(id)})
 
             return user.deleted_count
 

@@ -12,9 +12,9 @@ CORS(app)
 api = Api(app)
 
 api.add_resource(TrainModel, '/trainModel', '/trainModel/<id>')
-api.add_resource(User, '/user', '/user/<email>', '/user/<email>/<password>')
+api.add_resource(User, '/user', '/user/<id>', '/user/<email>/<password>')
 api.add_resource(Users, '/users', '/users/<id>')
-api.add_resource(Teacher, '/teacher', '/teacher/<email>/<password>')
+api.add_resource(Teacher, '/teacher', '/teacher/<id>', '/teacher/<email>/<password>')
 api.add_resource(Teachers, '/teachers', '/teachers/<id>')
 
 if __name__ == '__main__':
