@@ -20,6 +20,7 @@ class User(Resource):
                 "password": data["password"],
             }
 
+
             # find user to verify user with the same email already exists or not
             user = userCol.find_one({"email": data["email"]})
 
