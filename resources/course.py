@@ -44,55 +44,70 @@ class Course(Resource):
         except Exception:
             return traceback.format_exc()
 
-    # @staticmethod
-    # def get(email, password):
-    #     try:
-    #
-    #         teacher = courseCol.find_one({"email": email, "password": password}, {"password": False})
-    #
-    #         if teacher is None:
-    #             return 'Email or Password is invalid'
-    #
-    #         teacher = json.loads(json_util.dumps(teacher))  # convert response to json
-    #         teacher["_id"] = teacher["_id"]["$oid"]
-    #
-    #         return teacher
-    #
-    #     except Exception:
-    #         return 'Email or Password is invalid'
+    @staticmethod
+    def get(id):
+        try:
 
-    # @staticmethod
-    # def delete(id):
-    #
-    #     try:
-    #         # find teacher by email.
-    #         teacher = courseCol.find_one({"_id": ObjectId(id)})
-    #
-    #         if teacher is None:
-    #             return 'Teacher id is invalid'
-    #
-    #         teacher = courseCol.delete_one({"_id": ObjectId(id)})
-    #
-    #         return teacher.deleted_count
-    #
-    #     except Exception:
-    #         return traceback.format_exc()
+            course = courseCol.find_one({"_id": ObjectId(id)})
+
+            if course is None:
+                return 'Email or Password is invalid'
+
+            course = json.loads(json_util.dumps(course))  # convert response to json
+            course["_id"] = course["_id"]["$oid"]
+            course["teacherId"] = course["teacherId"]["$oid"]
+
+            return course
+
+        except Exception:
+            return 'Course Not Found'
+
+    @staticmethod
+    def delete(id):
+
+        try:
+            # find teacher by email.
+            course = courseCol.find_one({"_id": ObjectId(id)})
+
+            if course is None:
+                return 'Course id is invalid'
+
+            course = courseCol.delete_one({"_id": ObjectId(id)})
+
+            return course.deleted_count
+
+        except Exception:
+            return traceback.format_exc()
 
 
 class Courses(Resource):
+
     @staticmethod
     def get():
-        pass
-        # try:
-        #
-        #     teachers = courseCol.find()  # get all teachers
-        #     teachers = json.loads(json_util.dumps(teachers))  # convert response to json
-        #
-        #     for teacher in teachers:
-        #         teacher['_id'] = teacher['_id']['$oid']
-        #
-        #     return teachers
-        #
-        # except Exception:
-        #     return traceback.format_exc()
+        try:
+            courses = courseCol.find()  # get all courses
+            courses = json.loads(json_util.dumps(courses))  # convert response to json
 
+            for course in courses:
+                course['_id'] = course['_id']['$oid']
+                course["teacherId"] = course["teacherId"]["$oid"]
+
+            return courses
+
+        except Exception:
+            return traceback.format_exc()
+
+    @staticmethod
+    def get(teacher_id):
+        try:
+            courses = courseCol.find({"teacherId": ObjectId(teacher_id)})  # get all courses
+            courses = json.loads(json_util.dumps(courses))  # convert response to json
+
+            for course in courses:
+                course['_id'] = course['_id']['$oid']
+                course["teacherId"] = course["teacherId"]["$oid"]
+
+            return courses
+
+        except Exception:
+            return traceback.format_exc()
