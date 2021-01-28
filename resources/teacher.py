@@ -2,7 +2,7 @@ from flask_restful import Resource
 from flask import request
 from config.configDb import mydb
 import traceback
-from bson import json_util
+from bson import json_util, ObjectId
 import json
 
 teacherCol = mydb['teacher']  # creating collection
@@ -53,6 +53,23 @@ class Teacher(Resource):
 
         except Exception:
             return 'Email or Password is invalid'
+
+    @staticmethod
+    def delete(id):
+
+        try:
+            # find teacher by email.
+            teacher = teacherCol.find_one({"_id": ObjectId(id)})
+
+            if teacher is None:
+                return 'Teacher id is invalid'
+
+            teacher = teacherCol.delete_one({"_id": ObjectId(id)})
+
+            return teacher.deleted_count
+
+        except Exception:
+            return traceback.format_exc()
 
 
 class Teachers(Resource):
