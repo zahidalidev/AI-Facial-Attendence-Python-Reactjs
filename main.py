@@ -21,6 +21,6 @@ api.add_resource(Teacher, '/teacher', '/teacher/<id>', '/teacher/<email>/<passwo
 api.add_resource(Teachers, '/teachers', '/teachers/<id>')
 
 api.add_resource(Course, '/course', '/course/<id>')
-api.add_resource(Courses, '/courses', '/courses/<teacherId>')
+api.add_resource(Courses, '/courses', '/courses/<teacher_id>')
 if __name__ == '__main__':
     app.run(debug=True)  # important to mention debug=True
