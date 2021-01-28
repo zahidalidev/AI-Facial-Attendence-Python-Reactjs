@@ -5,32 +5,32 @@ import traceback
 from bson import json_util
 import json
 
-userCol = mydb['user']
+teacherCol = mydb['teacher']
 
 
-class User(Resource):
+class Teacher(Resource):
     @staticmethod
     def post():
         try:
             data = request.json
-            user_dic = {
+            teacher_dic = {
                 "fullName": data["fullName"],
                 "email": data["email"],
                 "contactNumber": data["contactNumber"],
                 "password": data["password"],
             }
 
-            user = userCol.find_one({"email": data["email"]})
+            teacher = teacherCol.find_one({"email": data["email"]})
 
-            if user is None:
-                user_id = userCol.insert_one(user_dic).inserted_id
-                res = userCol.find_one({"_id": user_id})
+            if teacher is None:
+                teacher_id = teacherCol.insert_one(teacher_dic).inserted_id
+                res = teacherCol.find_one({"_id": teacher_id})
 
                 res = json.loads(json_util.dumps(res))
                 res['_id'] = res['_id']['$oid']
                 return res
 
-            return 'This email is already Registered'
+            return "This email is already Registered"
 
         except Exception:
             return traceback.format_exc()
@@ -39,32 +39,32 @@ class User(Resource):
     def get(email, password):
         try:
 
-            user = userCol.find_one({"email": email, "password": password}, {"password": False})
+            teacher = teacherCol.find_one({"email": email, "password": password}, {"password": False})
 
-            if user is None:
+            if teacher is None:
                 return 'Email or Password is invalid'
 
-            user = json.loads(json_util.dumps(user))
-            user["_id"] = user["_id"]["$oid"]
+            teacher = json.loads(json_util.dumps(teacher))
+            teacher["_id"] = teacher["_id"]["$oid"]
 
-            return user
+            return teacher
 
         except Exception:
             return 'Email or Password is invalid'
 
-class Users(Resource):
+class Teachers(Resource):
     @staticmethod
     def get():
 
         try:
 
-            users = userCol.find()
-            users = json.loads(json_util.dumps(users))
+            teachers = teacherCol.find()
+            teachers = json.loads(json_util.dumps(teachers))
 
-            for user in users:
-                user['_id'] = user['_id']['$oid']
+            for teacher in teachers:
+                teacher['_id'] = teacher['_id']['$oid']
 
-            return users
+            return teachers
 
         except Exception:
             return traceback.format_exc()
