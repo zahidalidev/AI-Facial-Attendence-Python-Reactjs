@@ -5,7 +5,7 @@ import traceback
 from bson import json_util
 import json
 
-userCol = mydb['user']
+userCol = mydb['user']  # creating collection
 
 
 class User(Resource):
@@ -20,13 +20,15 @@ class User(Resource):
                 "password": data["password"],
             }
 
+            # find user to verify user with the same email already exists or not
             user = userCol.find_one({"email": data["email"]})
 
+            # if user is not exists
             if user is None:
                 user_id = userCol.insert_one(user_dic).inserted_id
                 res = userCol.find_one({"_id": user_id})
 
-                res = json.loads(json_util.dumps(res))
+                res = json.loads(json_util.dumps(res))  # convert response to json
                 res['_id'] = res['_id']['$oid']
                 return res
 
@@ -39,12 +41,13 @@ class User(Resource):
     def get(email, password):
         try:
 
+            # find user by email and password.
             user = userCol.find_one({"email": email, "password": password}, {"password": False})
 
             if user is None:
                 return 'Email or Password is invalid'
 
-            user = json.loads(json_util.dumps(user))
+            user = json.loads(json_util.dumps(user))  # convert response to json
             user["_id"] = user["_id"]["$oid"]
 
             return user
@@ -52,14 +55,15 @@ class User(Resource):
         except Exception:
             return 'Email or Password is invalid'
 
+
 class Users(Resource):
     @staticmethod
     def get():
 
         try:
 
-            users = userCol.find()
-            users = json.loads(json_util.dumps(users))
+            users = userCol.find()  # get all users
+            users = json.loads(json_util.dumps(users))  # convert response to json
 
             for user in users:
                 user['_id'] = user['_id']['$oid']
