@@ -4,7 +4,6 @@ from flask_cors import CORS
 import config.configDb
 
 from resources.trainModel import TrainModel
-from resources.routeTest import routeTest
 from resources.user import User
 
 app = Flask(__name__)
@@ -12,7 +11,6 @@ CORS(app)
 api = Api(app)
 
 api.add_resource(TrainModel, '/trainModel', '/trainModel/<string:id>')
-api.add_resource(routeTest, '/routeTest', '/routeTest/<string:id>')
 api.add_resource(User, '/user', '/user/<string:id>')
 
 if __name__ == '__main__':
