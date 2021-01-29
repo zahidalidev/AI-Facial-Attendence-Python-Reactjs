@@ -16,25 +16,43 @@ class Attendance(Resource):
     def post():
         try:
             data = request.json
-            attendance_dic = {
-                "date": str(datetime.date.today()),
-                "attendance": data["attendance"],
-                "courseId": ObjectId(data["courseId"]),
-            }
+            date = str(datetime.date.today())
 
             # Verify Course id
             course = courseCol.find_one({"_id": ObjectId(data["courseId"])})
             if course is None:
                 return "Course ID is invalid"
 
-            attendance_id = attendanceCol.insert_one(attendance_dic).inserted_id
-            res = attendanceCol.find_one({"_id": attendance_id})
+            current_attendance = attendanceCol.find_one({"courseId": ObjectId(data["courseId"]), "date": date})
+            if current_attendance is None:
+                attendance_dic = {
+                    "date": date,
+                    "attendance": data["attendance"],
+                    "courseId": ObjectId(data["courseId"]),
+                }
 
-            res = json.loads(json_util.dumps(res))  # convert response to json
-            res['_id'] = res['_id']['$oid']
-            res['courseId'] = res['courseId']['$oid']
+                attendance_id = attendanceCol.insert_one(attendance_dic).inserted_id
+                res = attendanceCol.find_one({"_id": attendance_id})
 
-            return res
+                res = json.loads(json_util.dumps(res))  # convert response to json
+                res['_id'] = res['_id']['$oid']
+                res['courseId'] = res['courseId']['$oid']
+
+                return res
+
+            old_attendance = current_attendance['attendance']
+            new_attendance = data['attendance'][0]
+
+            if new_attendance not in old_attendance:
+                old_attendance.append(new_attendance)
+
+                query = {"courseId": ObjectId(data["courseId"]), "date": date}
+                updated_attendance = {"$set": {"attendance": old_attendance}}
+                new_res = attendanceCol.update_one(query, updated_attendance)
+
+                print(new_res)
+                return "updated"
+
 
         except Exception:
             return traceback.format_exc()
@@ -91,3 +109,37 @@ class CoursesAttendance(Resource):
 
         except Exception:
             return traceback.format_exc()
+
+
+    # @staticmethod
+    # def put(course_id):
+    #     try:
+    #         data = request.json
+    #         date = str(datetime.date.today())
+    #
+    #         # Verify Course id
+    #         course = courseCol.find_one({"_id": ObjectId(course_id)})
+    #         if course is None:
+    #             return "Course ID is invalid"
+    #
+    #         old_attendance = attendanceCol.find({"courseId": ObjectId(course_id), "date": date})
+    #
+    #         attendance_dic = {
+    #             "date": str(datetime.date.today()),
+    #             "attendance": data["attendance"],
+    #             "courseId": ObjectId(data["courseId"]),
+    #         }
+    #
+    #         attendance_id = attendanceCol.insert_one(attendance_dic).inserted_id
+    #         res = attendanceCol.find_one({"_id": attendance_id})
+    #
+    #         res = json.loads(json_util.dumps(res))  # convert response to json
+    #         res['_id'] = res['_id']['$oid']
+    #         res['courseId'] = res['courseId']['$oid']
+    #
+    #         return res
+    #
+    #     except Exception:
+    #         return traceback.format_exc()
+
+
