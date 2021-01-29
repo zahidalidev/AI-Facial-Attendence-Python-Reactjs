@@ -2,47 +2,72 @@ import cv2
 import numpy as np
 import face_recognition
 import os
-from flask import Flask, request, jsonify
-from flask_restful import Resource, reqparse
-import base64
+from flask import request
+from flask_restful import Resource
 import io
 from config.configDb import mydb
-import json
 import pickle
+from bson import json_util, ObjectId
+import json
+import traceback
+
+model_col = mydb["model"]  # creating collection to save trained model
 
 
 class TrainModel(Resource):
+
     @staticmethod
-    def post():
-        files = request.files
-        all_encodings = []
+    def post(id):
+        try:
+            files = request.files
+            all_encodings = []
 
-        for name, image in files.items():
-            in_memory_file = io.BytesIO()
-            image.save(in_memory_file)
-            image = np.fromstring(in_memory_file.getvalue(), dtype=np.uint8)
-            color_image_flag = 1
-            image = cv2.imdecode(image, color_image_flag)
+            for name, image in files.items():
+                in_memory_file = io.BytesIO()
+                image.save(in_memory_file)
+                image = np.fromstring(in_memory_file.getvalue(), dtype=np.uint8)
+                color_image_flag = 1
+                image = cv2.imdecode(image, color_image_flag)
 
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-            encodings = face_recognition.face_encodings(image)
-            for encoding in encodings:
-                all_encodings.append(encoding)
+                encodings = face_recognition.face_encodings(image)
+                for encoding in encodings:
+                    all_encodings.append(encoding)
 
-        encodings_detected = len(all_encodings)
-        res = str(encodings_detected) + 'faces detected'
-        print(res)
+            encodings_detected = len(all_encodings)
+            res = str(encodings_detected) + 'faces detected'
+            print(res)
 
-        # inserting model in db
-        fa_nco = mydb["faceEncodings"]
-        pickle_model = pickle.dumps(all_encodings)
-        encodings_collections = {"encodings": pickle_model, "user_id": "zahid5"}
-        fa_nco.insert_one(encodings_collections)
+            # inserting model in db
+            pickle_model = pickle.dumps(all_encodings)
+            encodings_collections = {"model": pickle_model, "courseId": ObjectId(id)}
+            model_col.insert_one(encodings_collections)
 
-        # getting model from db
-        data = fa_nco.find_one({'user_id': 'zahid'})
-        pickled_model = data['encodings']
-        trained_model = pickle.loads(pickled_model)
-        print(len(trained_model))
-        return res
+            # getting model from db
+            # data = model_col.find_one({'courseId': ObjectId(id)})
+            # pickled_model = data['model']
+            # trained_model = pickle.loads(pickled_model)
+            # print(len(trained_model))
+
+            return "model trained"
+
+        except Exception:
+            return traceback.format_exc()
+
+    @staticmethod
+    def delete(id):
+
+        try:
+            # find teacher by email.
+            model = model_col.find_one({"courseId": ObjectId(id)})
+
+            if model is None:
+                return 'Course id is invalid'
+
+            model = model_col.delete_one({"courseId": ObjectId(id)})
+
+            return model.deleted_count
+
+        except Exception:
+            return traceback.format_exc()
