@@ -32,7 +32,16 @@ class Attendance(Resource):
             if course is None:
                 return "Course ID is invalid"
 
+            # getting model from db
+            model_data = model_col.find_one({'courseId': course_id})
+            pickled_model = model_data['model']
+            trained_model = pickle.loads(pickled_model)
+            print(len(trained_model))
+
+
             current_attendance = attendanceCol.find_one({"courseId": course_id, "date": today_date})
+
+            # mark new attendance
             if current_attendance is None:
                 new_attendance = [{reg_number: "p"}]
 
@@ -51,6 +60,7 @@ class Attendance(Resource):
 
                 return res
 
+            # update attendance
             old_attendance = current_attendance['attendance']
             new_attendance = {reg_number: "p"}
 
