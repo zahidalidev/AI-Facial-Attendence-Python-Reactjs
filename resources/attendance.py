@@ -34,7 +34,7 @@ class Attendance(Resource):
                 return "Course ID is invalid"
 
             # preparing image
-            encoding = []
+            new_encodings = []  # to save encodings
             for name, image in files.items():
                 in_memory_file = io.BytesIO()
                 image.save(in_memory_file)
@@ -45,55 +45,56 @@ class Attendance(Resource):
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
                 # encodings from image
-
-                encoding = face_recognition.face_encodings(image)[0]
-
-            encodings_detected = len(encoding)
-            print(encodings_detected)
-            print(encoding)
+                new_encodings = face_recognition.face_encodings(image)[0]
 
             # getting model from db
             model_data = model_col.find_one({'courseId': course_id})
             pickled_model = model_data['model']
             trained_model = pickle.loads(pickled_model)
-            # print(len(trained_model))
 
+            # compare faces using trained and new encodings
+            match = face_recognition.compare_faces(trained_model, new_encodings)
 
-            current_attendance = attendanceCol.find_one({"courseId": course_id, "date": today_date})
+            # if face is found mark attendance
+            if True in match:
+                current_attendance = attendanceCol.find_one({"courseId": course_id, "date": today_date})
 
-            # mark new attendance
-            if current_attendance is None:
-                new_attendance = [{reg_number: "p"}]
+                # mark new attendance
+                if current_attendance is None:
+                    new_attendance = [{reg_number: "p"}]
 
-                attendance_dic = {
-                    "date": today_date,
-                    "attendance": new_attendance,
-                    "courseId": course_id,
-                }
+                    attendance_dic = {
+                        "date": today_date,
+                        "attendance": new_attendance,
+                        "courseId": course_id,
+                    }
 
-                attendance_id = attendanceCol.insert_one(attendance_dic).inserted_id
-                res = attendanceCol.find_one({"_id": attendance_id})
+                    attendance_id = attendanceCol.insert_one(attendance_dic).inserted_id
+                    res = attendanceCol.find_one({"_id": attendance_id})
 
-                res = json.loads(json_util.dumps(res))  # convert response to json
-                res['_id'] = res['_id']['$oid']
-                res['courseId'] = res['courseId']['$oid']
+                    res = json.loads(json_util.dumps(res))  # convert response to json
+                    res['_id'] = res['_id']['$oid']
+                    res['courseId'] = res['courseId']['$oid']
 
-                return res
+                    return res
 
-            # update attendance
-            old_attendance = current_attendance['attendance']
-            new_attendance = {reg_number: "p"}
+                # update attendance
+                old_attendance = current_attendance['attendance']
+                new_attendance = {reg_number: "p"}
 
-            if new_attendance not in old_attendance:
-                old_attendance.append(new_attendance)
+                if new_attendance not in old_attendance:
+                    old_attendance.append(new_attendance)
 
-                query = {"courseId": course_id, "date": today_date}
-                updated_attendance = {"$set": {"attendance": old_attendance}}
-                new_res = attendanceCol.update_one(query, updated_attendance)
+                    query = {"courseId": course_id, "date": today_date}
+                    updated_attendance = {"$set": {"attendance": old_attendance}}
+                    new_res = attendanceCol.update_one(query, updated_attendance)
 
-                # print(new_res)
-                return "updated"
+                    print(new_res)
+                    return "updated"
 
+                return "Attendance already marked"
+
+            return "Attendance not marked, Face not found"
 
         except Exception:
             return traceback.format_exc()
