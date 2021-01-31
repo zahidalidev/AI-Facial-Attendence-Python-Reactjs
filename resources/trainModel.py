@@ -37,20 +37,26 @@ class TrainModel(Resource):
 
             encodings_detected = len(all_encodings)
             res = str(encodings_detected) + 'faces detected'
-            print(res)
+            # print(res)
 
             # inserting model in db
             pickle_model = pickle.dumps(all_encodings)
             encodings_collections = {"model": pickle_model, "courseId": ObjectId(id)}
-            model_col.insert_one(encodings_collections)
+            res_id = model_col.insert_one(encodings_collections).inserted_id
+
+            res_id = json.loads(json_util.dumps(res_id))  # convert response to json
+            res_id['_id'] = res_id['$oid']
+
+            if res_id is None:
+                return "Model not trained"
+
+            return res
 
             # getting model from db
             # data = model_col.find_one({'courseId': ObjectId(id)})
             # pickled_model = data['model']
             # trained_model = pickle.loads(pickled_model)
             # print(len(trained_model))
-
-            return "model trained"
 
         except Exception:
             return traceback.format_exc()
