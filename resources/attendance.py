@@ -5,30 +5,41 @@ import traceback
 from bson import json_util, ObjectId
 import json
 import datetime
+import cv2
+import numpy as np
+import face_recognition
+import os
+import io
+import pickle
+
 
 attendanceCol = mydb['attendance']  # creating collection
 courseCol = mydb['course']  # creating collection
+model_col = mydb["model"]  # creating collection to save trained model
 
 
 class Attendance(Resource):
 
     @staticmethod
-    def post():
+    def post(date, course_id):
         try:
-            data = request.json
-            date = str(datetime.date.today())
+            reg_number = date
+            course_id = ObjectId(course_id)
+            today_date = str(datetime.date.today())
 
             # Verify Course id
-            course = courseCol.find_one({"_id": ObjectId(data["courseId"])})
+            course = courseCol.find_one({"_id": course_id})
             if course is None:
                 return "Course ID is invalid"
 
-            current_attendance = attendanceCol.find_one({"courseId": ObjectId(data["courseId"]), "date": date})
+            current_attendance = attendanceCol.find_one({"courseId": course_id, "date": today_date})
             if current_attendance is None:
+                new_attendance = [{reg_number: "p"}]
+
                 attendance_dic = {
-                    "date": date,
-                    "attendance": data["attendance"],
-                    "courseId": ObjectId(data["courseId"]),
+                    "date": today_date,
+                    "attendance": new_attendance,
+                    "courseId": course_id,
                 }
 
                 attendance_id = attendanceCol.insert_one(attendance_dic).inserted_id
@@ -41,12 +52,12 @@ class Attendance(Resource):
                 return res
 
             old_attendance = current_attendance['attendance']
-            new_attendance = data['attendance'][0]
+            new_attendance = {reg_number: "p"}
 
             if new_attendance not in old_attendance:
                 old_attendance.append(new_attendance)
 
-                query = {"courseId": ObjectId(data["courseId"]), "date": date}
+                query = {"courseId": course_id, "date": today_date}
                 updated_attendance = {"$set": {"attendance": old_attendance}}
                 new_res = attendanceCol.update_one(query, updated_attendance)
 
