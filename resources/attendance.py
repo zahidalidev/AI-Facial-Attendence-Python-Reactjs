@@ -70,13 +70,10 @@ class Attendance(Resource):
                     }
 
                     attendance_id = attendanceCol.insert_one(attendance_dic).inserted_id
-                    res = attendanceCol.find_one({"_id": attendance_id})
 
-                    res = json.loads(json_util.dumps(res))  # convert response to json
-                    res['_id'] = res['_id']['$oid']
-                    res['courseId'] = res['courseId']['$oid']
-
-                    return res
+                    attendance_id = json.loads(json_util.dumps(attendance_id))  # convert response to json
+                    attendance_id['_id'] = attendance_id['$oid']
+                    return attendance_id['_id']
 
                 # update attendance
                 old_attendance = current_attendance['attendance']
@@ -87,10 +84,11 @@ class Attendance(Resource):
 
                     query = {"courseId": course_id, "date": today_date}
                     updated_attendance = {"$set": {"attendance": old_attendance}}
-                    new_res = attendanceCol.update_one(query, updated_attendance)
+                    new_res = attendanceCol.find_one_and_update(query, updated_attendance)
 
-                    print(new_res)
-                    return "updated"
+                    new_res = json.loads(json_util.dumps(new_res))
+                    new_res['_id'] = new_res['_id']['$oid']
+                    return new_res['_id']
 
                 return "Attendance already marked"
 
