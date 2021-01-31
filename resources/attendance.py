@@ -23,6 +23,7 @@ class Attendance(Resource):
     @staticmethod
     def post(date, course_id):
         try:
+            files = request.files  # file from body of request
             reg_number = date
             course_id = ObjectId(course_id)
             today_date = str(datetime.date.today())
@@ -32,11 +33,30 @@ class Attendance(Resource):
             if course is None:
                 return "Course ID is invalid"
 
+            # preparing image
+            encoding = []
+            for name, image in files.items():
+                in_memory_file = io.BytesIO()
+                image.save(in_memory_file)
+                image = np.fromstring(in_memory_file.getvalue(), dtype=np.uint8)
+                color_image_flag = 1
+                image = cv2.imdecode(image, color_image_flag)
+
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+                # encodings from image
+
+                encoding = face_recognition.face_encodings(image)[0]
+
+            encodings_detected = len(encoding)
+            print(encodings_detected)
+            print(encoding)
+
             # getting model from db
             model_data = model_col.find_one({'courseId': course_id})
             pickled_model = model_data['model']
             trained_model = pickle.loads(pickled_model)
-            print(len(trained_model))
+            # print(len(trained_model))
 
 
             current_attendance = attendanceCol.find_one({"courseId": course_id, "date": today_date})
@@ -71,7 +91,7 @@ class Attendance(Resource):
                 updated_attendance = {"$set": {"attendance": old_attendance}}
                 new_res = attendanceCol.update_one(query, updated_attendance)
 
-                print(new_res)
+                # print(new_res)
                 return "updated"
 
 
