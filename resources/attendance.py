@@ -5,54 +5,94 @@ import traceback
 from bson import json_util, ObjectId
 import json
 import datetime
+import cv2
+import numpy as np
+import face_recognition
+import os
+import io
+import pickle
+
 
 attendanceCol = mydb['attendance']  # creating collection
 courseCol = mydb['course']  # creating collection
+model_col = mydb["model"]  # creating collection to save trained model
 
 
 class Attendance(Resource):
 
     @staticmethod
-    def post():
+    def post(date, course_id):
         try:
-            data = request.json
-            date = str(datetime.date.today())
+            files = request.files  # file from body of request
+            reg_number = date
+            course_id = ObjectId(course_id)
+            today_date = str(datetime.date.today())
 
             # Verify Course id
-            course = courseCol.find_one({"_id": ObjectId(data["courseId"])})
+            course = courseCol.find_one({"_id": course_id})
             if course is None:
                 return "Course ID is invalid"
 
-            current_attendance = attendanceCol.find_one({"courseId": ObjectId(data["courseId"]), "date": date})
-            if current_attendance is None:
-                attendance_dic = {
-                    "date": date,
-                    "attendance": data["attendance"],
-                    "courseId": ObjectId(data["courseId"]),
-                }
+            # preparing image
+            new_encodings = []  # to save encodings
+            for name, image in files.items():
+                in_memory_file = io.BytesIO()
+                image.save(in_memory_file)
+                image = np.fromstring(in_memory_file.getvalue(), dtype=np.uint8)
+                color_image_flag = 1
+                image = cv2.imdecode(image, color_image_flag)
 
-                attendance_id = attendanceCol.insert_one(attendance_dic).inserted_id
-                res = attendanceCol.find_one({"_id": attendance_id})
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-                res = json.loads(json_util.dumps(res))  # convert response to json
-                res['_id'] = res['_id']['$oid']
-                res['courseId'] = res['courseId']['$oid']
+                # encodings from image
+                new_encodings = face_recognition.face_encodings(image)[0]
 
-                return res
+            # getting model from db
+            model_data = model_col.find_one({'courseId': course_id})
+            pickled_model = model_data['model']
+            trained_model = pickle.loads(pickled_model)
 
-            old_attendance = current_attendance['attendance']
-            new_attendance = data['attendance'][0]
+            # compare faces using trained and new encodings
+            match = face_recognition.compare_faces(trained_model, new_encodings)
 
-            if new_attendance not in old_attendance:
-                old_attendance.append(new_attendance)
+            # if face is found mark attendance
+            if True in match:
+                current_attendance = attendanceCol.find_one({"courseId": course_id, "date": today_date})
 
-                query = {"courseId": ObjectId(data["courseId"]), "date": date}
-                updated_attendance = {"$set": {"attendance": old_attendance}}
-                new_res = attendanceCol.update_one(query, updated_attendance)
+                # mark new attendance
+                if current_attendance is None:
+                    new_attendance = [{reg_number: "p"}]
 
-                print(new_res)
-                return "updated"
+                    attendance_dic = {
+                        "date": today_date,
+                        "attendance": new_attendance,
+                        "courseId": course_id,
+                    }
 
+                    attendance_id = attendanceCol.insert_one(attendance_dic).inserted_id
+
+                    attendance_id = json.loads(json_util.dumps(attendance_id))  # convert response to json
+                    attendance_id['_id'] = attendance_id['$oid']
+                    return attendance_id['_id']
+
+                # update attendance
+                old_attendance = current_attendance['attendance']
+                new_attendance = {reg_number: "p"}
+
+                if new_attendance not in old_attendance:
+                    old_attendance.append(new_attendance)
+
+                    query = {"courseId": course_id, "date": today_date}
+                    updated_attendance = {"$set": {"attendance": old_attendance}}
+                    new_res = attendanceCol.find_one_and_update(query, updated_attendance)
+
+                    new_res = json.loads(json_util.dumps(new_res))
+                    new_res['_id'] = new_res['_id']['$oid']
+                    return new_res['_id']
+
+                return "Attendance already marked"
+
+            return "Attendance not marked, Face not found"
 
         except Exception:
             return traceback.format_exc()
