@@ -43,17 +43,20 @@ class Attendance(Resource):
                 image = cv2.imdecode(image, color_image_flag)
 
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
+                # cv2.imshow('zahid', image)
+                # cv2.waitKey(0)
                 # encodings from image
                 new_encodings = face_recognition.face_encodings(image)[0]
-
+                print("inc: ", new_encodings)
             # getting model from db
+
             model_data = model_col.find_one({'courseId': course_id})
             pickled_model = model_data['model']
             trained_model = pickle.loads(pickled_model)
 
             # compare faces using trained and new encodings
             match = face_recognition.compare_faces(trained_model, new_encodings)
+            print("match: ", match)
 
             # if face is found mark attendance
             if True in match:
