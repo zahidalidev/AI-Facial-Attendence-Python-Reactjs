@@ -49,6 +49,7 @@ class Attendance(Resource):
                 new_encodings = face_recognition.face_encodings(image)[0]
                 print("inc: ", new_encodings)
             # getting model from db
+
             model_data = model_col.find_one({'courseId': course_id})
             pickled_model = model_data['model']
             trained_model = pickle.loads(pickled_model)
