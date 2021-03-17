@@ -4,6 +4,7 @@ from config.configDb import mydb
 import traceback
 from bson import json_util, ObjectId
 import json
+import jwt
 
 teacherCol = mydb['teacher']  # creating collection
 
@@ -32,7 +33,7 @@ class Teacher(Resource):
                 res['_id'] = res['_id']['$oid']
                 return res
 
-            return "This email is already Registered"
+            raise Exception("This email is already Registered")
 
         except Exception:
             return traceback.format_exc()
@@ -44,15 +45,18 @@ class Teacher(Resource):
             teacher = teacherCol.find_one({"email": email, "password": password}, {"password": False})
 
             if teacher is None:
-                return 'Email or Password is invalid'
+                raise Exception('Email or Password is invalid')
 
             teacher = json.loads(json_util.dumps(teacher))  # convert response to json
             teacher["_id"] = teacher["_id"]["$oid"]
 
-            return teacher
+            token = jwt.encode(teacher, "privateKey12345")
+            return token
+
+            # return teacher
 
         except Exception:
-            return 'Email or Password is invalid'
+            return traceback.format_exc()
 
     @staticmethod
     def delete(id):

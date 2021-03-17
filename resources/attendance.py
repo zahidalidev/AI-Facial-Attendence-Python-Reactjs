@@ -31,7 +31,7 @@ class Attendance(Resource):
             # Verify Course id
             course = courseCol.find_one({"_id": course_id})
             if course is None:
-                return "Course ID is invalid"
+                raise Exception("Course ID is invalid")
 
             # preparing image
             new_encodings = []  # to save encodings
@@ -47,7 +47,6 @@ class Attendance(Resource):
                 # cv2.waitKey(0)
                 # encodings from image
                 new_encodings = face_recognition.face_encodings(image)[0]
-                print("inc: ", new_encodings)
             # getting model from db
 
             model_data = model_col.find_one({'courseId': course_id})
@@ -56,7 +55,6 @@ class Attendance(Resource):
 
             # compare faces using trained and new encodings
             match = face_recognition.compare_faces(trained_model, new_encodings)
-            print("match: ", match)
 
             # if face is found mark attendance
             if True in match:
@@ -93,9 +91,9 @@ class Attendance(Resource):
                     new_res['_id'] = new_res['_id']['$oid']
                     return new_res['_id']
 
-                return "Attendance already marked"
+                raise Exception("Attendance already marked")
 
-            return "Attendance not marked, Face not found"
+            raise Exception("Attendance not marked, Face not found")
 
         except Exception:
             return traceback.format_exc()

@@ -13,7 +13,6 @@ import traceback
 
 model_col = mydb["model"]  # creating collection to save trained model
 
-
 class TrainModel(Resource):
 
     @staticmethod
@@ -48,7 +47,7 @@ class TrainModel(Resource):
             res_id['_id'] = res_id['$oid']
 
             if res_id is None:
-                return "Model not trained"
+                raise Exception("Model not trained")
 
             return res
 
@@ -69,7 +68,7 @@ class TrainModel(Resource):
             model = model_col.find_one({"courseId": ObjectId(id)})
 
             if model is None:
-                return 'Course id is invalid'
+                raise Exception('Course id is invalid')
 
             model = model_col.delete_one({"courseId": ObjectId(id)})
 
