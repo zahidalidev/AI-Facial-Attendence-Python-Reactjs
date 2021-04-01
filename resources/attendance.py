@@ -1,5 +1,5 @@
 from flask_restful import Resource
-from flask import request
+from flask import request, Response
 from config.configDb import mydb
 import traceback
 from bson import json_util, ObjectId
@@ -11,7 +11,7 @@ import face_recognition
 import os
 import io
 import pickle
-
+import csv
 
 attendanceCol = mydb['attendance']  # creating collection
 courseCol = mydb['course']  # creating collection
@@ -33,6 +33,8 @@ class Attendance(Resource):
             if course is None:
                 raise Exception("Course ID is invalid")
 
+            print("len1: ")
+
             # preparing image
             new_encodings = []  # to save encodings
             for name, image in files.items():
@@ -43,10 +45,16 @@ class Attendance(Resource):
                 image = cv2.imdecode(image, color_image_flag)
 
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                # cv2.imshow('zahid', image)
-                # cv2.waitKey(0)
+
                 # encodings from image
+                test_encodings = face_recognition.face_encodings(image)
+                if not len(test_encodings) > 0:
+                    print("exception")
+                    # raise Exception("no face detected")
+                    return 0
+
                 new_encodings = face_recognition.face_encodings(image)[0]
+
             # getting model from db
 
             model_data = model_col.find_one({'courseId': course_id})
@@ -146,7 +154,26 @@ class CoursesAttendance(Resource):
                 attendance['_id'] = attendance['_id']['$oid']
                 attendance["courseId"] = attendance["courseId"]["$oid"]
 
-            return courses_attendance
+            print(courses_attendance)
+
+            with open("data_attendance.csv", "w") as file:
+                writer = csv.writer(file)
+                for item in courses_attendance:
+
+                    writer.writerow([f"Date: {item['date']}"])
+                    arr = item['attendance']
+                    for key in arr:
+                        writer.writerow([list(key.keys())[0], "p", ""])
+                    writer.writerow(['-------------------', "-------------------"])
+
+            # open attendance file to read
+            with open("data_attendance.csv") as fp:
+                csv2 = fp.read()
+
+            return Response(
+                csv2,
+                mimetype="text/csv",
+                headers={"Content-disposition": "attachment; filename=data_attendance.csv"})
 
         except Exception:
             return traceback.format_exc()
