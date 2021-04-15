@@ -23,7 +23,7 @@ class Course(Resource):
             # Verify Teacher id
             teacher = teacherCol.find_one({"_id": ObjectId(data["teacherId"])})
             if teacher is None:
-                return "Teacher ID is invalid"
+                raise Exception("Teacher ID is invalid")
 
             # find course to verify course with the same name and teacherId already exists or not
             course = courseCol.find_one({"name": data["name"], "teacherId": ObjectId(data["teacherId"])})
@@ -39,7 +39,7 @@ class Course(Resource):
 
                 return res
 
-            return "This name with this teacher is already Registered"
+            raise Exception("This name with this teacher is already Registered")
 
         except Exception:
             return traceback.format_exc()
@@ -51,7 +51,7 @@ class Course(Resource):
             course = courseCol.find_one({"_id": ObjectId(id)})
 
             if course is None:
-                return 'Email or Password is invalid'
+                raise Exception("Course ID is invalid")
 
             course = json.loads(json_util.dumps(course))  # convert response to json
             course["_id"] = course["_id"]["$oid"]
@@ -60,7 +60,8 @@ class Course(Resource):
             return course
 
         except Exception:
-            return 'Course Not Found'
+            return traceback.format_exc()
+
 
     @staticmethod
     def delete(id):
@@ -70,7 +71,7 @@ class Course(Resource):
             course = courseCol.find_one({"_id": ObjectId(id)})
 
             if course is None:
-                return 'Course id is invalid'
+               raise Exception("Course ID is invalid")
 
             course = courseCol.delete_one({"_id": ObjectId(id)})
 
